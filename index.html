@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>アルティメットじゃんけん</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --accent: #f59e0b;
+        --p1: #3b82f6;
+        --p2: #ef4444;
+        --green: #10b981;
+        --border: #334155;
+        --pri: #6366f1;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Hiragino Kaku Gothic Pro", "Meiryo", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100dvh;
+        transition: background 0.25s;
+      }
+      header {
+        background: linear-gradient(135deg, #1e1b4b, #312e81);
+        padding: 0.85rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        transition: background 0.25s;
+      }
+      header h1 {
+        font-size: 1.05rem;
+        font-weight: 900;
+        flex: 1;
+      }
+      .badge {
+        font-size: 0.68rem;
+        background: var(--accent);
+        color: #000;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-weight: 800;
+      }
+
+      .container {
+        max-width: 540px;
+        margin: 0 auto;
+        padding: 1rem;
+      }
+      .section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+      }
+      .section-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        margin-bottom: 0.6rem;
+        color: var(--accent);
+      }
+
+      input {
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        padding: 0.5rem 0.6rem;
+        font-size: 0.88rem;
+        font-family: inherit;
+        background: #0f172a;
+        color: var(--text);
+        width: 100%;
+      }
+      input:focus {
+        border-color: var(--pri);
+        outline: none;
+      }
+      .input-full {
+        margin-bottom: 0.4rem;
+      }
+
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: 0.55rem 1rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.1s;
+      }
+      button:active {
+        transform: scale(0.97);
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-pri {
+        background: var(--pri);
+        color: #fff;
+        width: 100%;
+      }
+      .btn-accent {
+        background: var(--accent);
+        color: #000;
+      }
+      .btn-danger {
+        background: var(--p2);
+        color: #fff;
+      }
+      .btn-outline {
+        background: transparent;
+        border: 2px solid var(--border);
+        color: var(--text);
+        width: 100%;
+      }
+
+      .status {
+        font-size: 0.82rem;
+        color: var(--muted);
+        margin-top: 0.5rem;
+        line-height: 1.5;
+        text-align: center;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .room-code {
+        font-size: 2rem;
+        font-weight: 900;
+        letter-spacing: 0.15em;
+        color: var(--accent);
+      }
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.6rem;
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      .waiting-msg {
+        text-align: center;
+        padding: 1.5rem 0;
+      }
+      .waiting-msg .icon {
+        font-size: 2.5rem;
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+      .waiting-msg .text {
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .btn-row {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.6rem;
+        justify-content: center;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        z-index: 200;
+      }
+      .modal {
+        width: min(440px, 100%);
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      }
+      .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.6rem;
+      }
+      .modal-head .title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: var(--accent);
+        margin: 0;
+      }
+      .qr-wrap {
+        display: flex;
+        justify-content: center;
+        margin: 0.7rem 0;
+      }
+      .qr-wrap img {
+        width: min(280px, 70vw);
+        height: auto;
+        border-radius: 10px;
+        background: #fff;
+        padding: 8px;
+      }
+      .url-box {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.5rem;
+        font-size: 0.72rem;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow-x: auto;
+        background: rgba(0, 0, 0, 0.3);
+      }
+      .share-btns {
+        display: flex;
+        gap: 0.4rem;
+        margin-top: 0.6rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>アルティメットじゃんけん</h1>
+      <span class="badge">WS ONLINE</span>
+    </header>
+
+    <div class="container">
+      <!-- Entry Section -->
+      <div class="section" id="entry-section">
+        <div class="section-title">オンライン対戦</div>
+        <div class="input-full">
+          <input id="display-name" placeholder="表示名（例: たいよう）" />
+        </div>
+
+        <div
+          style="
+            margin-top: 1rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+          "
+        >
+          <div
+            style="
+              font-size: 0.8rem;
+              margin-bottom: 0.4rem;
+              color: var(--muted);
+            "
+          >
+            ランダムマッチですぐ遊ぶ
+          </div>
+          <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem"
+          >
+            <button class="btn-pri" id="btn-rand-bo1">BO1 (1本先取)</button>
+            <button class="btn-pri" id="btn-rand-bo3">BO3 (2本先取)</button>
+          </div>
+        </div>
+
+        <div
+          style="
+            margin-top: 1rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+          "
+        >
+          <div
+            style="
+              font-size: 0.8rem;
+              margin-bottom: 0.4rem;
+              color: var(--muted);
+            "
+          >
+            友達と遊ぶ (ルーム作成)
+          </div>
+          <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem"
+          >
+            <button class="btn-outline" id="btn-create-bo1">BO1で作成</button>
+            <button class="btn-outline" id="btn-create-bo3">BO3で作成</button>
+          </div>
+        </div>
+
+        <div
+          style="
+            margin-top: 1rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+          "
+        >
+          <div
+            style="
+              font-size: 0.8rem;
+              margin-bottom: 0.4rem;
+              color: var(--muted);
+            "
+          >
+            ルームに参加
+          </div>
+          <div style="display: flex; gap: 0.4rem">
+            <input
+              id="join-code"
+              class="mono"
+              placeholder="ルームコード（6文字）"
+              maxlength="6"
+              style="flex: 1"
+            />
+            <button class="btn-accent" id="btn-join">参加</button>
+          </div>
+        </div>
+        <div class="status" id="entry-status">
+          サーバーに接続しています...
+        </div>
+      </div>
+
+      <!-- Lobby Section -->
+      <div class="section hidden" id="lobby-section">
+        <div class="section-head">
+          <div>
+            <div style="font-size: 0.72rem; color: var(--muted)">
+              ルームコード
+            </div>
+            <div class="room-code mono" id="room-code-display">------</div>
+          </div>
+          <button
+            class="btn-danger"
+            id="leave-lobby"
+            style="font-size: 0.78rem"
+          >
+            退出
+          </button>
+        </div>
+        <div class="waiting-msg" id="waiting-msg">
+          <div class="icon">⏳</div>
+          <div class="text">
+            対戦相手を待っています...<br />ルームコードを相手に伝えてください
+          </div>
+        </div>
+        <div class="btn-row hidden" id="qr-btn-row">
+          <button class="btn-accent" id="show-qr">QRで招待</button>
+          <button class="btn-outline" id="copy-link">URLコピー</button>
+        </div>
+      </div>
+
+      <!-- QR Modal -->
+      <div class="modal-backdrop hidden" id="qr-modal">
+        <div class="modal">
+          <div class="modal-head">
+            <div class="title">招待QR</div>
+            <button
+              class="btn-danger"
+              id="close-qr"
+              style="font-size: 0.78rem; padding: 0.35rem 0.7rem"
+            >
+              閉じる
+            </button>
+          </div>
+          <div
+            style="
+              font-size: 0.78rem;
+              color: var(--muted);
+              margin-bottom: 0.4rem;
+            "
+          >
+            相手のカメラで読み取ってもらえばOK。
+          </div>
+          <div class="qr-wrap"><img id="qr-img" alt="QR" /></div>
+          <div class="url-box mono" id="qr-url"></div>
+          <div class="share-btns">
+            <button class="btn-pri" id="copy-qr-url">URLをコピー</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      const $ = (id) => document.getElementById(id);
+      let ws = null;
+      let currentRoomId = null;
+
+      // ════════ WebSocket 接続初期化 ════════
+      function connectWS() {
+        const wsUrl = `wss://janken-project-back.onrender.com/ws`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          $("entry-status").textContent = "✅ サーバーに接続しました。";
+          $("entry-status").style.color = "var(--green)";
+          document
+            .querySelectorAll("#entry-section button")
+            .forEach((b) => (b.disabled = false));
+        };
+
+        ws.onmessage = (e) => {
+          const data = JSON.parse(e.data);
+          handleMessage(data);
+        };
+
+        ws.onclose = () => {
+          $("entry-status").textContent =
+            "❌ サーバーとの接続が切れました。リロードしてください。";
+          $("entry-status").style.color = "var(--p2)";
+          document
+            .querySelectorAll("button")
+            .forEach((b) => (b.disabled = true));
+        };
+      }
+
+      document
+        .querySelectorAll("#entry-section button")
+        .forEach((b) => (b.disabled = true));
+      connectWS();
+
+      // ════════ メッセージハンドリング ════════
+      function handleMessage(data) {
+        switch (data.type) {
+          case "waiting_random":
+            $("entry-section").classList.add("hidden");
+            $("lobby-section").classList.remove("hidden");
+            $("room-code-display").textContent = "RANDOM";
+            $("waiting-msg").innerHTML =
+              '<div class="icon">🔍</div><div class="text">対戦相手を探しています...</div>';
+            $("qr-btn-row").classList.add("hidden");
+            break;
+
+          case "room_created":
+            $("entry-section").classList.add("hidden");
+            $("lobby-section").classList.remove("hidden");
+            currentRoomId = data.roomId;
+            $("room-code-display").textContent = data.roomId;
+            $("qr-btn-row").classList.remove("hidden");
+            break;
+
+          case "game_start":
+            const matchUrl = `${location.origin}/match?code=${data.roomId || currentRoomId}`;
+            window.location.href = matchUrl;
+            break;
+
+          case "error":
+            $("entry-status").textContent = "❌ " + data.message;
+            $("entry-status").style.color = "var(--p2)";
+            break;
+        }
+      }
+
+      // ════════ 送信アクション ════════
+      const getName = () => $("display-name").value.trim() || "Player";
+
+      $("btn-rand-bo1").onclick = () =>
+        ws.send(
+          JSON.stringify({ type: "join_random", bo: 1, name: getName() }),
+        );
+      $("btn-rand-bo3").onclick = () =>
+        ws.send(
+          JSON.stringify({ type: "join_random", bo: 3, name: getName() }),
+        );
+      $("btn-create-bo1").onclick = () =>
+        ws.send(
+          JSON.stringify({ type: "create_room", bo: 1, name: getName() }),
+        );
+      $("btn-create-bo3").onclick = () =>
+        ws.send(
+          JSON.stringify({ type: "create_room", bo: 3, name: getName() }),
+        );
+
+      $("btn-join").onclick = () => {
+        const code = $("join-code").value.trim().toUpperCase();
+        if (code.length === 6) {
+          ws.send(
+            JSON.stringify({
+              type: "join_room",
+              roomId: code,
+              name: getName(),
+            }),
+          );
+        } else {
+          $("entry-status").textContent = "6文字のコードを入力してください";
+        }
+      };
+
+      // ════════ QRコード機能 ════════
+      function buildInviteUrl(roomId) {
+        const base = `${location.origin}`;
+        return `${base}/match?code=${roomId}`;
+      }
+
+      $("show-qr").onclick = () => {
+        if (!currentRoomId) return;
+        const url = buildInviteUrl(currentRoomId);
+        const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(url)}`;
+        $("qr-img").src = qrSrc;
+        $("qr-url").textContent = url;
+        $("qr-modal").classList.remove("hidden");
+      };
+
+      $("close-qr").onclick = () => $("qr-modal").classList.add("hidden");
+
+      $("copy-link").onclick = async () => {
+        if (!currentRoomId) return;
+        const url = buildInviteUrl(currentRoomId);
+        try {
+          await navigator.clipboard.writeText(url);
+          alert("URLをコピーしました");
+        } catch (e) {}
+      };
+
+      $("copy-qr-url").onclick = async () => {
+        const url = $("qr-url").textContent;
+        try {
+          await navigator.clipboard.writeText(url);
+          alert("URLをコピーしました");
+        } catch (e) {}
+      };
+
+      $("leave-lobby").onclick = () => {
+        ws.send(JSON.stringify({ type: "leave_room" }));
+        location.reload();
+      };
+    </script>
+  </body>
+</html>
